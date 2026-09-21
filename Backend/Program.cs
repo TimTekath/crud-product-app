@@ -48,18 +48,19 @@ app.MapPost("/api/products", async (ProductCreateDto dto, AppDbContext db) =>
     return Results.Created($"/api/products/{product.Id}", product);
 });
 
-app.MapPut("/api/products/{id:int}", async (int id, Product updatedProduct, AppDbContext db) =>
+app.MapPut("/api/products/{id:int}", async (int id, ProductUpdateDto dto, AppDbContext db) =>
 {
+    if (string.IsNullOrWhiteSpace(dto.Name))
+        return Results.BadRequest("Name darf nicht leer sein.");
+    if (dto.Price < 0 || dto.Stock < 0)
+        return Results.BadRequest("Preis und Bestand dürfen nicht negativ sein.");
+
     var product = await db.Products.FindAsync(id);
+    if (product is null) return Results.NotFound();
 
-    if(product is null)
-    {
-        return Results.NotFound();
-    }
-
-    product.Name = updatedProduct.Name;
-    product.Price = updatedProduct.Price;
-    product.Stock = updatedProduct.Stock;
+    product.Name = dto.Name.Trim();
+    product.Price = dto.Price;
+    product.Stock = dto.Stock;
 
     await db.SaveChangesAsync();
     return Results.Ok(product);

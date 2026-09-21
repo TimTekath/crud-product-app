@@ -1,6 +1,38 @@
 @Backend_HostAddress = http://localhost:5288
 
-GET {{Backend_HostAddress}}/weatherforecast/
+### Alle Produkte abrufen
+GET {{Backend_HostAddress}}/api/products
 Accept: application/json
 
-###
+### Neues Produkt anlegen
+POST {{Backend_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Testprodukt",
+  "price": 9.99,
+  "stock": 10
+}
+
+### Ungültiges Produkt anlegen (sollte 400 liefern)
+POST {{Backend_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "",
+  "price": -5,
+  "stock": 0
+}
+
+### Produkt aktualisieren (Id anpassen!)
+PUT {{Backend_HostAddress}}/api/products/1
+Content-Type: application/json
+
+{
+  "name": "Testprodukt (bearbeitet)",
+  "price": 12.50,
+  "stock": 5
+}
+
+### Produkt löschen (Id anpassen!)
+DELETE {{Backend_HostAddress}}/api/products/1
