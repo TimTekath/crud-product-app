@@ -155,6 +155,8 @@ const handleDelete = async (id) => {
           <button type="button" onClick={handleCancelEdit}>Abbrechen</button>
         )}
       </form>
+      
+      {error && <p className="error">{error}</p>}
 
       {/* IndexedDB Steuerung */}
       <div className='filter-box'>
