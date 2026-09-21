@@ -28,11 +28,24 @@ using (var scope = app.Services.CreateScope())
 app.MapGet("/api/products", async (AppDbContext db) =>
     await db.Products.ToListAsync());
 
-app.MapPost("/api/products" , async (Product product, AppDbContext db) =>
+app.MapPost("/api/products", async (ProductCreateDto dto, AppDbContext db) =>
 {
+    if (string.IsNullOrWhiteSpace(dto.Name))
+        return Results.BadRequest("Name darf nicht leer sein.");
+    if (dto.Price < 0 || dto.Stock < 0)
+        return Results.BadRequest("Preis und Bestand dürfen nicht negativ sein.");
+
+    var product = new Product
+    {
+        Name = dto.Name.Trim(),
+        Price = dto.Price,
+        Stock = dto.Stock
+    };
+
     db.Products.Add(product);
     await db.SaveChangesAsync();
-    return Results.Created("$/api/products/{product.Id}", product);
+
+    return Results.Created($"/api/products/{product.Id}", product);
 });
 
 app.MapPut("/api/products/{id:int}", async (int id, Product updatedProduct, AppDbContext db) =>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from './db';
+import './App.css';
 
 const API_URL = 'http://localhost:5288/api/products';
 
@@ -8,21 +9,26 @@ function App() {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
+
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
   
   // Zustand für den Bearbeiten-Modus (null = neues Produkt, sonst ID des Produkts)
   const [editingId, setEditingId] = useState(null);
 
   const [showInStockOnly, setShowInStockOnly] = useState(false);
 
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch(API_URL);
-      const data = await res.json();
-      setProducts(data);
-    } catch (err) {
-      console.error('Fehler beim Laden:', err);
-    }
-  };
+const fetchProducts = async () => {
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error(`Server antwortete mit ${res.status}`);
+    const data = await res.json();
+    setProducts(data);
+  } catch (err) {
+    console.error('Fehler beim Laden:', err);
+    setError('Produkte konnten nicht geladen werden.');
+  }
+};
 
   useEffect(() => {
     fetchProducts();
@@ -40,39 +46,45 @@ function App() {
   };
 
   // Formular-Absenden für Erstellen (POST) und Aktualisieren (PUT)
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!name || !price) return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!name || !price) return;
 
-    const productData = {
-      name,
-      price: parseFloat(price),
-      stock: parseInt(stock) || 0
-    };
+  const productData = {
+    name,
+    price: parseFloat(price),
+    stock: parseInt(stock) || 0
+  };
 
-    if (editingId) {
-      // PUT: Produkt bearbeiten
-      await fetch(`${API_URL}/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productData)
-      });
-      setEditingId(null);
-    } else {
-      // POST: Neues Produkt anlegen
-      await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productData)
-      });
+  setSaving(true);
+  setError(null);
+
+  try {
+    const url = editingId ? `${API_URL}/${editingId}` : API_URL;
+    const method = editingId ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(productData)
+    });
+
+    if (!res.ok) {
+      throw new Error(`Speichern fehlgeschlagen (Status ${res.status})`);
     }
 
-    // Formular zurücksetzen
+    setEditingId(null);
     setName('');
     setPrice('');
     setStock('');
-    fetchProducts();
-  };
+    await fetchProducts();
+  } catch (err) {
+    console.error(err);
+    setError(err.message);
+  } finally {
+    setSaving(false);
+  }
+};
 
   // Klick auf "Bearbeiten": Daten ins Formular laden
   const handleEdit = (product) => {
@@ -90,21 +102,32 @@ function App() {
     setStock('');
   };
 
-  const handleDelete = async (id) => {
-    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-    fetchProducts();
-  };
+const handleDelete = async (id) => {
+  setError(null);
+  try {
+    const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+
+    if (!res.ok) {
+      throw new Error(`Löschen fehlgeschlagen (Status ${res.status})`);
+    }
+
+    await fetchProducts();
+  } catch (err) {
+    console.error(err);
+    setError(err.message);
+  }
+};
 
   const filteredProducts = showInStockOnly 
     ? products.filter(p => p.stock > 0) 
     : products;
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '650px', margin: '0 auto' }}>
+    <div className='app'>
       <h1>Produktverwaltung (CRUD)</h1>
 
       {/* Formular */}
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <form onSubmit={handleSubmit} className='product-form'>
         <input 
           placeholder="Name" 
           value={name} 
@@ -125,8 +148,8 @@ function App() {
           value={stock} 
           onChange={(e) => setStock(e.target.value)} 
         />
-        <button type="submit">
-          {editingId ? 'Speichern' : 'Hinzufügen'}
+        <button type="submit" disabled={saving}>
+          {saving ? 'Speichert…' : editingId ? 'Speichern' : 'Hinzufügen'}
         </button>
         {editingId && (
           <button type="button" onClick={handleCancelEdit}>Abbrechen</button>
@@ -134,7 +157,7 @@ function App() {
       </form>
 
       {/* IndexedDB Steuerung */}
-      <div style={{ marginBottom: '15px', background: '#f4f4f4', padding: '10px', borderRadius: '4px', color: '#333' }}>
+      <div className='filter-box'>
         <label style={{ cursor: 'pointer' }}>
           <input 
             type="checkbox" 
@@ -146,7 +169,7 @@ function App() {
       </div>
 
       {/* Tabelle */}
-      <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className='product-table'>
         <thead>
           <tr>
             <th>ID</th>
@@ -163,7 +186,7 @@ function App() {
               <td>{p.name}</td>
               <td>{p.price.toFixed(2)} €</td>
               <td>{p.stock}</td>
-              <td style={{ display: 'flex', gap: '5px' }}>
+              <td className='actions'>
                 <button onClick={() => handleEdit(p)}>Bearbeiten</button>
                 <button onClick={() => handleDelete(p.id)}>Löschen</button>
               </td>
