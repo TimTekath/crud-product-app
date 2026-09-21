@@ -1,0 +1,20 @@
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Vite / Build Output
+frontend/dist/
+
+# .NET / C# Build Output
+bin/
+obj/
+Backend/bin/
+Backend/obj/
+
+# Local SQLite Database
+Backend/app.db
+Backend/app.db-shm
+Backend/app.db-wal
+
+# VS Code settings
+.vscode/
