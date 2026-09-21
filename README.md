@@ -1,8 +1,7 @@
 # CRUD Product App
 
 Kleine Fullstack-Anwendung zur Verwaltung von Produkten (Anlegen, Anzeigen,
-Bearbeiten, Löschen). Entstanden als Übungsprojekt, um eine REST-API mit
-ASP.NET Core und ein React-Frontend sauber zusammenzuführen.
+Bearbeiten, Löschen). Entstanden als Übungsprojekt.
 
 ## Technologien
 
@@ -15,9 +14,7 @@ Das Backend stellt vier Endpunkte unter `/api/products` bereit (GET, POST,
 PUT, DELETE) und speichert die Daten in einer lokalen SQLite-Datei. Das
 Frontend greift per `fetch` darauf zu.
 
-Zusätzlich wird eine UI-Einstellung (Filter „nur verfügbare Produkte")
-in der IndexedDB des Browsers abgelegt, damit sie einen Seitenneuladen
-übersteht – ohne dafür den Server zu belasten.
+Zusätzlich wird eine UI-Einstellung in der IndexedDB des Browsers abgelegt, damit sie beim neu laden nicht verschwindet.
 
 ## Starten
 
